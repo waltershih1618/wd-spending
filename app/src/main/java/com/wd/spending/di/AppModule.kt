@@ -1,7 +1,11 @@
 package com.wd.spending.di
 
 import android.content.Context
+import com.google.api.client.extensions.android.http.AndroidHttp
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.google.api.client.json.JsonFactory
+import com.google.api.client.json.jackson2.JacksonFactory
+import com.google.api.services.sheets.v4.Sheets
 import com.google.api.services.sheets.v4.SheetsScopes
 import com.wd.spending.data.SpendingRepository
 import com.wd.spending.data.remote.SpreadSheetDataSource
@@ -24,13 +28,22 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideSheetService(googleAccountCredential: GoogleAccountCredential): Sheets {
+        val transport = AndroidHttp.newCompatibleTransport()
+        val jsonFactory: JsonFactory = JacksonFactory.getDefaultInstance()
+        return Sheets.Builder(transport, jsonFactory, googleAccountCredential)
+            .setApplicationName("Google Sheets").build()
+    }
+
+    @Provides
+    @Singleton
     fun provideSpendingRepository(spreadSheetDataSource: SpreadSheetDataSource): SpendingRepository {
         return SpendingRepository(spreadSheetDataSource)
     }
 
     @Provides
     @Singleton
-    fun provideSpreadSheetDataSource(googleAccountCredential: GoogleAccountCredential): SpreadSheetDataSource {
-        return SpreadSheetDataSource(googleAccountCredential)
+    fun provideSpreadSheetDataSource(sheetService: Sheets): SpreadSheetDataSource {
+        return SpreadSheetDataSource(sheetService)
     }
 }
